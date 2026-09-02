@@ -60,9 +60,12 @@ function App() {
     try {
       const Pi = window.Pi;
       if (!Pi) {
-        setStatus('⚠️ يجب فتح التطبيق داخل Pi Browser');
+        setStatus('❌ Pi SDK غير محمّل. تأكد أنك داخل متصفح Pi Browser');
         return;
       }
+      // عرض إصدار SDK للتشخيص
+      console.log('Pi SDK version:', Pi.version);
+      setStatus('⏳ جاري المصادقة...');
       const auth = await Pi.authenticate(['username', 'wallet_address'], 'RADAR_AI_AGENT');
       setUser(auth.user);
       setStatus(`✅ مرحباً ${auth.user.username}`);
@@ -72,7 +75,7 @@ function App() {
       }
     } catch (error) {
       console.error('Pi login error:', error);
-      setStatus('❌ فشل تسجيل الدخول');
+      setStatus('❌ فشل تسجيل الدخول: ' + (error.message || 'خطأ غير معروف'));
     }
   }
 
@@ -85,7 +88,7 @@ function App() {
     try {
       const Pi = window.Pi;
       if (!Pi) {
-        setStatus('⚠️ يجب فتح التطبيق داخل Pi Browser');
+        setStatus('❌ Pi SDK غير محمّل. تأكد أنك داخل متصفح Pi Browser');
         setPaying(false);
         return;
       }
@@ -104,7 +107,7 @@ function App() {
       }
     } catch (error) {
       console.error('Payment error:', error);
-      setStatus('❌ فشل الدفع');
+      setStatus('❌ فشل الدفع: ' + (error.message || 'خطأ غير معروف'));
     } finally {
       setPaying(false);
     }
