@@ -1,0 +1,237 @@
+body {
+  margin: 0;
+  background-color: #0a0a0f;
+  color: #e0e0ff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app {
+  text-align: center;
+  padding: 2rem;
+}
+
+.header {
+  margin-bottom: 3rem;
+}
+
+.neon-text {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #0ff;
+  text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff;
+  margin: 0;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 1.2rem;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+
+.section {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.safe-title {
+  color: #0ff;
+  text-shadow: 0 0 8px #0ff;
+}
+
+.golden-title {
+  color: #ffd700;
+  text-shadow: 0 0 8px #ffd700;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  justify-items: center;
+}
+
+.project-card {
+  background: rgba(20, 20, 30, 0.85);
+  border: 1px solid #0ff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  width: 100%;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.project-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+}
+
+.golden-card {
+  border-color: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+.golden-card:hover {
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+}
+
+.project-card h3 {
+  margin-top: 0;
+  color: #fff;
+}
+
+.project-card p {
+  color: #aaa;
+  margin: 0.5rem 0;
+}
+
+.status {
+  color: #0f0;
+  margin: 1rem 0;
+  font-size: 1.2rem;
+}
+
+.network-stats {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 2rem auto;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  justify-items: center;
+}
+
+.stat-card {
+  background: rgba(20, 20, 30, 0.85);
+  border: 1px solid #0ff;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 100%;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  text-align: center;
+}
+
+.stat-card span {
+  display: block;
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card strong {
+  color: #0ff;
+  font-size: 1.5rem;
+}
+
+.activity-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 2rem auto;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  justify-items: center;
+}
+
+.activity-card {
+  background: rgba(20, 20, 30, 0.85);
+  border: 1px solid #ffd700;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 100%;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+  text-align: center;
+}
+
+.activity-card h4 {
+  color: #ffd700;
+  margin: 0 0 0.5rem 0;
+}
+
+.activity-card p {
+  color: #aaa;
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+}
+
+.alerts-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 2rem auto;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alert-card {
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid #ffd700;
+  border-radius: 8px;
+  padding: 0.8rem;
+  color: #ffd700;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.alert-card p {
+  margin: 0;
+}
+
+.pi-button {
+  background: #0ff;
+  color: #000;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 0.5rem;
+}
+
+.pi-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.subscribed-badge {
+  color: #0f0;
+  font-weight: bold;
+  text-shadow: 0 0 8px #0f0;
+}
+
+.blurred {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
