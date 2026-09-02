@@ -56,6 +56,21 @@ function App() {
     }
   }
 
+  async function approvePaymentOnServer(paymentId) {
+    try {
+      const response = await fetch('/api/approve-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId }),
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Approval request failed:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }
+
   async function saveSubscription(payment) {
     if (!user) return;
     try {
@@ -120,18 +135,19 @@ function App() {
         metadata: { userId: user.uid },
       };
 
-      // استخدام callbacks كما يتطلب Pi SDK
       Pi.createPayment(paymentData, {
-        onReadyForServerApproval: (paymentId) => {
+        onReadyForServerApproval: async (paymentId) => {
           console.log('Payment ready for server approval:', paymentId);
           setStatus('⏳ بانتظار موافقة الخادم...');
-          // هنا يمكنك إرسال paymentId إلى خادمك للموافقة المبدئية
-          // لكن في حالتنا سننتقل مباشرة للتحقق عند الاكتمال
+          const approvalResult = await approvePaymentOnServer(paymentId);
+          if (!approvalResult.success) {
+            setStatus('❌ فشلت موافقة الخادم على الدفع');
+            setPaying(false);
+          }
         },
         onReadyForServerCompletion: async (paymentId, txid) => {
           console.log('Payment completed:', paymentId, txid);
           setStatus('⏳ جاري التحقق النهائي...');
-          // هنا نتحقق من الدفع عبر الخادم ثم نحفظ الاشتراك
           const verifyData = await verifyPaymentOnServer(paymentId);
           if (verifyData.success) {
             await saveSubscription({ paymentId, amount: paymentData.amount, memo: paymentData.memo });
