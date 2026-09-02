@@ -14,6 +14,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [piReady, setPiReady] = useState(false);
 
   const seedProjects = [
     { id: 'project1', name: 'Pi Chain Mall', description: 'منصة تجارة إلكترونية لامركزية داخل نظام باي', tier: 'safe', liquidity: 120000, volume24h: 45000, createdAt: '2026-08-01' },
@@ -21,6 +22,25 @@ function App() {
     { id: 'project3', name: 'Pi NFT Market', description: 'سوق للرموز غير القابلة للاستبدال', tier: 'safe', liquidity: 80000, volume24h: 15000, createdAt: '2026-07-20' },
     { id: 'project4', name: 'Pi Launchpad', description: 'منصة إطلاق مشاريع جديدة', tier: 'golden', liquidity: 20000, volume24h: 50000, createdAt: '2026-09-01' },
   ];
+
+  // تهيئة Pi SDK عند التحميل
+  useEffect(() => {
+    async function initPi() {
+      try {
+        if (window.Pi && typeof window.Pi.init === 'function') {
+          await window.Pi.init({ version: '2.0' });
+          setPiReady(true);
+          console.log('Pi SDK initialized');
+        } else {
+          console.log('Pi SDK not available');
+        }
+      } catch (error) {
+        console.error('Pi init error:', error);
+        setStatus('❌ خطأ في تهيئة Pi SDK: ' + error.message);
+      }
+    }
+    initPi();
+  }, []);
 
   async function verifyPaymentOnServer(paymentId) {
     try {
@@ -63,8 +83,10 @@ function App() {
         setStatus('❌ Pi SDK غير محمّل. تأكد أنك داخل متصفح Pi Browser');
         return;
       }
-      // عرض إصدار SDK للتشخيص
-      console.log('Pi SDK version:', Pi.version);
+      if (!piReady) {
+        setStatus('⏳ Pi SDK لم يكتمل تهيئته بعد، حاول مرة أخرى');
+        return;
+      }
       setStatus('⏳ جاري المصادقة...');
       const auth = await Pi.authenticate(['username', 'wallet_address'], 'RADAR_AI_AGENT');
       setUser(auth.user);
