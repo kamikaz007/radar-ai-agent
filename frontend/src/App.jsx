@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, setDoc, query, orderBy, limit } from 'firebase/firestore';
 import './App.css';
 
 function App() {
@@ -15,7 +15,6 @@ function App() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [paying, setPaying] = useState(false);
 
-  // seed projects (لنعدّلها كما في السابق)
   const seedProjects = [
     { id: 'project1', name: 'Pi Chain Mall', description: 'منصة تجارة إلكترونية لامركزية داخل نظام باي', tier: 'safe', liquidity: 120000, volume24h: 45000, createdAt: '2026-08-01' },
     { id: 'project2', name: 'Pi Games', description: 'منصة ألعاب تقدم مكافآت بعملة Pi', tier: 'golden', liquidity: 35000, volume24h: 28000, createdAt: '2026-08-15' },
@@ -23,37 +22,60 @@ function App() {
     { id: 'project4', name: 'Pi Launchpad', description: 'منصة إطلاق مشاريع جديدة', tier: 'golden', liquidity: 20000, volume24h: 50000, createdAt: '2026-09-01' },
   ];
 
-  // دالة مصادقة Pi
+  async function verifyPaymentOnServer(paymentId) {
+    try {
+      const response = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId }),
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Verification request failed:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }
+
+  async function saveSubscription(payment) {
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'subscriptions', user.uid), {
+        paymentId: payment.paymentId,
+        amount: payment.amount,
+        memo: payment.memo,
+        timestamp: new Date().toISOString(),
+        uid: user.uid,
+        username: user.username,
+      });
+      setIsSubscribed(true);
+      setStatus('✅ تم تفعيل الاشتراك بنجاح');
+    } catch (error) {
+      console.error('Error saving subscription:', error);
+      setStatus('❌ فشل حفظ الاشتراك');
+    }
+  }
+
   async function handlePiLogin() {
     try {
       const Pi = window.Pi;
       if (!Pi) {
-        setStatus('⚠️ يجب فتح التطبيق داخل متصفح Pi Browser');
+        setStatus('⚠️ يجب فتح التطبيق داخل Pi Browser');
         return;
       }
       const auth = await Pi.authenticate(['username', 'wallet_address'], 'RADAR_AI_AGENT');
       setUser(auth.user);
       setStatus(`✅ مرحباً ${auth.user.username}`);
-      // التحقق من الاشتراك بعد تسجيل الدخول
-      checkSubscription(auth.user.uid);
+      const subDoc = await getDoc(doc(db, 'subscriptions', auth.user.uid));
+      if (subDoc.exists()) {
+        setIsSubscribed(true);
+      }
     } catch (error) {
       console.error('Pi login error:', error);
       setStatus('❌ فشل تسجيل الدخول');
     }
   }
 
-  // دالة التحقق من الاشتراك
-  async function checkSubscription(uid) {
-    try {
-      const subDoc = await getDocs(doc(db, 'subscriptions', uid));
-      // في Firestore v9+: نستخدم getDoc بدلاً من getDocs
-      // سنصلح ذلك لاحقاً
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-    }
-  }
-
-  // دالة دفع الاشتراك
   async function handleSubscribe() {
     if (!user) {
       setStatus('⚠️ سجل الدخول أولاً');
@@ -62,15 +84,24 @@ function App() {
     setPaying(true);
     try {
       const Pi = window.Pi;
+      if (!Pi) {
+        setStatus('⚠️ يجب فتح التطبيق داخل Pi Browser');
+        setPaying(false);
+        return;
+      }
       const payment = {
-        amount: 1, // كمية Pi (يمكن تغييرها)
+        amount: 1,
         memo: 'اشتراك RADAR AI AGENT الشهري',
         metadata: { userId: user.uid },
       };
       const paymentResponse = await Pi.createPayment(payment);
-      // بعد نجاح الدفع، سنفعّل الاشتراك
-      setIsSubscribed(true);
-      setStatus('✅ تم تفعيل الاشتراك بنجاح');
+      setStatus('⏳ جاري التحقق من الدفع...');
+      const verifyData = await verifyPaymentOnServer(paymentResponse.paymentId);
+      if (verifyData.success) {
+        await saveSubscription(paymentResponse);
+      } else {
+        setStatus('⚠️ الدفع لم يكتمل بعد، حاول مرة أخرى لاحقًا');
+      }
     } catch (error) {
       console.error('Payment error:', error);
       setStatus('❌ فشل الدفع');
@@ -78,9 +109,6 @@ function App() {
       setPaying(false);
     }
   }
-
-  // بقية useEffect كما كانت سابقاً مع تعديل fetchAlerts و fetchClassifiedProjects و fetchNetworkStats إلخ
-  // سنضعها هنا بالكامل دون تغيير يذكر
 
   useEffect(() => {
     async function seedAndFetch() {
