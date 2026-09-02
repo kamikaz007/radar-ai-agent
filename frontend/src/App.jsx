@@ -113,23 +113,47 @@ function App() {
         setPaying(false);
         return;
       }
-      const payment = {
+
+      const paymentData = {
         amount: 1,
         memo: 'اشتراك RADAR AI AGENT الشهري',
         metadata: { userId: user.uid },
       };
-      const paymentResponse = await Pi.createPayment(payment);
-      setStatus('⏳ جاري التحقق من الدفع...');
-      const verifyData = await verifyPaymentOnServer(paymentResponse.paymentId);
-      if (verifyData.success) {
-        await saveSubscription(paymentResponse);
-      } else {
-        setStatus('⚠️ الدفع لم يكتمل بعد، حاول مرة أخرى لاحقًا');
-      }
+
+      // استخدام callbacks كما يتطلب Pi SDK
+      Pi.createPayment(paymentData, {
+        onReadyForServerApproval: (paymentId) => {
+          console.log('Payment ready for server approval:', paymentId);
+          setStatus('⏳ بانتظار موافقة الخادم...');
+          // هنا يمكنك إرسال paymentId إلى خادمك للموافقة المبدئية
+          // لكن في حالتنا سننتقل مباشرة للتحقق عند الاكتمال
+        },
+        onReadyForServerCompletion: async (paymentId, txid) => {
+          console.log('Payment completed:', paymentId, txid);
+          setStatus('⏳ جاري التحقق النهائي...');
+          // هنا نتحقق من الدفع عبر الخادم ثم نحفظ الاشتراك
+          const verifyData = await verifyPaymentOnServer(paymentId);
+          if (verifyData.success) {
+            await saveSubscription({ paymentId, amount: paymentData.amount, memo: paymentData.memo });
+          } else {
+            setStatus('⚠️ الدفع لم يكتمل بعد، حاول مرة أخرى لاحقًا');
+          }
+          setPaying(false);
+        },
+        onCancel: () => {
+          console.log('Payment cancelled');
+          setStatus('❌ تم إلغاء الدفع');
+          setPaying(false);
+        },
+        onError: (error) => {
+          console.error('Payment error:', error);
+          setStatus('❌ فشل الدفع: ' + (error.message || 'خطأ غير معروف'));
+          setPaying(false);
+        },
+      });
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Unexpected error in handleSubscribe:', error);
       setStatus('❌ فشل الدفع: ' + (error.message || 'خطأ غير معروف'));
-    } finally {
       setPaying(false);
     }
   }
