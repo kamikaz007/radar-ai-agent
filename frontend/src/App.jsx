@@ -23,7 +23,6 @@ function App() {
     { id: 'project4', name: 'Pi Launchpad', description: 'منصة إطلاق مشاريع جديدة', tier: 'golden', liquidity: 20000, volume24h: 50000, createdAt: '2026-09-01' },
   ];
 
-  // تهيئة Pi SDK عند التحميل
   useEffect(() => {
     async function initPi() {
       try {
@@ -88,7 +87,7 @@ function App() {
         return;
       }
       setStatus('⏳ جاري المصادقة...');
-      const auth = await Pi.authenticate(['username', 'wallet_address'], 'RADAR_AI_AGENT');
+      const auth = await Pi.authenticate(['username', 'wallet_address', 'payments'], 'RADAR_AI_AGENT');
       setUser(auth.user);
       setStatus(`✅ مرحباً ${auth.user.username}`);
       const subDoc = await getDoc(doc(db, 'subscriptions', auth.user.uid));
