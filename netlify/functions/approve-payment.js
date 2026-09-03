@@ -11,6 +11,10 @@ exports.handler = async (event, context) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'paymentId is required' }) };
     }
 
+    if (!process.env.PI_SERVER_KEY) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'PI_SERVER_KEY is not configured in environment' }) };
+    }
+
     const PI_API_URL = `https://api.minepi.com/v2/payments/${paymentId}/approve`;
     const response = await axios.post(PI_API_URL, {}, {
       headers: {
@@ -27,7 +31,7 @@ exports.handler = async (event, context) => {
     console.error('Approval error:', error.response?.data || error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Server error during approval' }),
+      body: JSON.stringify({ error: error.response?.data?.message || error.message || 'Server error during approval' }),
     };
   }
 };
