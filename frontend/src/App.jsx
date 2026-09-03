@@ -4,7 +4,6 @@ import { collection, getDocs, getDoc, doc, setDoc, query, orderBy, limit } from 
 import './App.css';
 import { FiZap, FiBell, FiActivity, FiShield, FiTrendingUp, FiLock, FiArrowUp, FiArrowDown, FiMinus } from 'react-icons/fi';
 
-// Hook للعدادات المتحركة
 function useCountUp(target, duration = 1000) {
   const [value, setValue] = useState(0);
   const previousTarget = useRef(target);
@@ -41,9 +40,9 @@ function App() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [paying, setPaying] = useState(false);
   const [piReady, setPiReady] = useState(false);
-  const canvasRef = useRef(null);
+  const matrixCanvasRef = useRef(null);
+  const [analysisLine, setAnalysisLine] = useState('');
 
-  // عدادات متحركة
   const activeAccounts = useCountUp(networkStats?.activeAccounts || 0, 1500);
   const totalTransactions = useCountUp(networkStats?.totalTransactions || 0, 1500);
   const totalOperations = useCountUp(networkStats?.totalOperations || 0, 1500);
@@ -62,79 +61,86 @@ function App() {
     return <FiMinus style={{ color: '#888' }} />;
   };
 
-  // تأثير الجزيئات
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const canvas = matrixCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    let animationFrameId;
-    let particles = [];
+    let animationId;
+    const columns = Math.floor(window.innerWidth / 20);
+    const drops = Array(columns).fill(0);
+    const chars = '01';
+    const fontSize = 16;
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      drops.length = Math.floor(canvas.width / fontSize);
+      drops.fill(0);
     };
     resize();
     window.addEventListener('resize', resize);
 
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.5;
-        this.speedY = (Math.random() - 0.5) * 0.5;
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        if (this.x > canvas.width) this.x = 0;
-        if (this.x < 0) this.x = canvas.width;
-        if (this.y > canvas.height) this.y = 0;
-        if (this.y < 0) this.y = canvas.height;
-      }
-      draw() {
-        ctx.fillStyle = '#00ff41';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
+    const drawMatrix = () => {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#00ff41';
+      ctx.font = `${fontSize}px 'Share Tech Mono', monospace`;
 
-    for (let i = 0; i < 150; i++) {
-      particles.push(new Particle());
-    }
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => {
-        p.update();
-        p.draw();
-      });
-      // خطوط بين الجزيئات القريبة
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 120) {
-            ctx.strokeStyle = `rgba(0, 255, 65, ${0.1 * (1 - distance / 120)})`;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
-          }
+      for (let i = 0; i < drops.length; i++) {
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        ctx.fillText(char, x, y);
+        if (y > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
         }
+        drops[i]++;
       }
-      animationFrameId = requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(drawMatrix);
     };
-    animate();
+    drawMatrix();
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
+  }, []);
+
+  useEffect(() => {
+    const phrases = [
+      'تحليل العقود الذكية...',
+      'فحص أحواض السيولة...',
+      'رصد المعاملات الجديدة...',
+      'تحديد الفرص الذهبية...',
+      'تتبع الأنشطة المشبوهة...',
+      'جلب بيانات البلوكشين...',
+    ];
+    let intervalId;
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+
+    intervalId = setInterval(() => {
+      const currentPhrase = phrases[phraseIndex];
+      if (isDeleting) {
+        charIndex--;
+      } else {
+        charIndex++;
+      }
+      setAnalysisLine(currentPhrase.substring(0, charIndex));
+      if (!isDeleting && charIndex === currentPhrase.length) {
+        isDeleting = true;
+        setTimeout(() => {
+          isDeleting = false;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+        }, 1500);
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+      }
+    }, 80);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -151,32 +157,40 @@ function App() {
     initPi();
   }, []);
 
-  async function verifyPaymentOnServer(paymentId) {
+  async function approvePaymentOnServer(paymentId) {
     try {
-      const response = await fetch('/.netlify/functions/verify-payment', {
+      const response = await fetch('/.netlify/functions/approve-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentId }),
       });
       const data = await response.json();
+      if (!response.ok) {
+        console.error('Approval response not ok:', response.status, data);
+        return { success: false, error: data.error || 'HTTP ' + response.status };
+      }
       return data;
     } catch (error) {
-      console.error('Verification request failed:', error);
+      console.error('Approval request failed:', error);
       return { success: false, error: 'Network error' };
     }
   }
 
-  async function approvePaymentOnServer(paymentId) {
+  async function completePaymentOnServer(paymentId, txid) {
     try {
-      const response = await fetch('/api/approve-payment', {
+      const response = await fetch('/.netlify/functions/complete-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId }),
+        body: JSON.stringify({ paymentId, txid }),
       });
       const data = await response.json();
+      if (!response.ok) {
+        console.error('Completion response not ok:', response.status, data);
+        return { success: false, error: data.error || 'HTTP ' + response.status };
+      }
       return data;
     } catch (error) {
-      console.error('Approval request failed:', error);
+      console.error('Completion request failed:', error);
       return { success: false, error: 'Network error' };
     }
   }
@@ -249,18 +263,20 @@ function App() {
         onReadyForServerApproval: async (paymentId) => {
           setStatus('⏳ بانتظار موافقة الخادم...');
           const approvalResult = await approvePaymentOnServer(paymentId);
-          if (!approvalResult.success) {
-            setStatus('❌ فشلت موافقة الخادم على الدفع');
+          if (approvalResult.success) {
+            setStatus('✅ تمت الموافقة على الدفع، بانتظار الاكتمال...');
+          } else {
+            setStatus('❌ فشلت موافقة الخادم: ' + (approvalResult.error || 'خطأ غير معروف'));
             setPaying(false);
           }
         },
         onReadyForServerCompletion: async (paymentId, txid) => {
-          setStatus('⏳ جاري التحقق النهائي...');
-          const verifyData = await verifyPaymentOnServer(paymentId);
-          if (verifyData.success) {
+          setStatus('⏳ جاري إتمام الدفع...');
+          const completeData = await completePaymentOnServer(paymentId, txid);
+          if (completeData.success) {
             await saveSubscription({ paymentId, amount: paymentData.amount, memo: paymentData.memo });
           } else {
-            setStatus('⚠️ الدفع لم يكتمل بعد، حاول مرة أخرى لاحقًا');
+            setStatus('⚠️ فشل إتمام الدفع: ' + (completeData.error || 'خطأ غير معروف'));
           }
           setPaying(false);
         },
@@ -361,13 +377,14 @@ function App() {
 
   return (
     <div className="app">
-      <canvas ref={canvasRef} id="particles-canvas" />
+      <canvas ref={matrixCanvasRef} id="matrix-canvas" />
       <header className="header">
         <h1 className="neon-text">RADAR AI AGENT</h1>
         <p className="subtitle">
           <FiActivity style={{ verticalAlign: 'middle', marginRight: '0.3rem' }} />
           <span className="typing-text">منصة تحليل استخباراتي لنظام باي البيئي</span>
         </p>
+        <div className="analysis-line">{analysisLine}</div>
         {!user ? (
           <button className="pi-button" onClick={handlePiLogin}>
             <FiLock style={{ marginRight: '5px' }} /> تسجيل الدخول عبر Pi

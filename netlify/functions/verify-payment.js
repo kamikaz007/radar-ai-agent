@@ -4,11 +4,13 @@ exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
+
   try {
     const { paymentId } = JSON.parse(event.body);
     if (!paymentId) {
       return { statusCode: 400, body: JSON.stringify({ error: 'paymentId is required' }) };
     }
+
     const PI_API_URL = 'https://api.minepi.com/v2/payments/' + paymentId;
     const response = await axios.get(PI_API_URL, {
       headers: {
@@ -16,6 +18,7 @@ exports.handler = async (event, context) => {
         'Content-Type': 'application/json',
       },
     });
+
     const paymentData = response.data;
     if (paymentData && paymentData.status === 'completed') {
       return { statusCode: 200, body: JSON.stringify({ success: true, payment: paymentData }) };
